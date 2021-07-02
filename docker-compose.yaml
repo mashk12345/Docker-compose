@@ -1,0 +1,64 @@
+version: '3.7'
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    ports:
+      - 1081:8080
+      - 50000:50000
+    container_name: jenkinscompose
+
+  nexus:
+    image: sonatype/nexus
+    restart: always
+    ports:
+      - "1082:8081"
+    container_name: nexuscompose
+
+  sonarqube:
+    image: sonarqube:6.3.1
+    privileged: true
+    user: root
+    container_name: sonarqubenexus
+    restart: always
+    ports:
+      - "1090:9000"
+
+  hub:
+    image: selenium/hub
+    ports:
+      - "4444:4444"
+
+    environment:
+      GRID_MAX_SESSION: 16
+      GRID_BROWSER_TIMEOUT: 3000
+      GRID_TIMEOUT: 3000
+
+  chrome:
+    image: selenium/node-chrome
+    container_name: web-automation_chrome
+    depends_on:
+      - hub
+    environment:
+      HUB_PORT_4444_TCP_ADDR: hub
+      HUB_PORT_4444_TCP_PORT: 4444
+      NODE_MAX_SESSION: 4
+      NODE_MAX_INSTANCES: 4
+    ports:
+      - "9001:5900"
+    links:
+      - hub
+
+  firefox:
+    image: selenium/node-firefox
+    container_name: web-automation_firefox
+    depends_on:
+      - hub
+    environment:
+      HUB_PORT_4444_TCP_ADDR: hub
+      HUB_PORT_4444_TCP_PORT: 4444
+      NODE_MAX_SESSION: 2
+      NODE_MAX_INSTANCES: 2
+    ports:
+      - "9002:5900"
+    links:
+      - hub
